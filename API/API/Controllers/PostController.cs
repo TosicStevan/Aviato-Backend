@@ -46,6 +46,7 @@ namespace API.Controllers
             {
                 db.Posts.Add(post);
                 db.SaveChanges();
+                
                 return Ok(post);
             }
             catch
@@ -53,6 +54,25 @@ namespace API.Controllers
                 return BadRequest(new { msg = "Database error" });
             }
             
+        }
+
+        [HttpGet("getMyPosts")]
+        public IActionResult GetMyPost()
+        {
+
+            // find user in token
+            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+
+            if (idClaim == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            var posts = db.Posts.Where(q => q.userId == user).ToList();
+
+            return Ok(posts);
         }
     }
 }
