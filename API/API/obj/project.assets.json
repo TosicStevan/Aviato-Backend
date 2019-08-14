@@ -14372,11 +14372,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Stevan\\Desktop\\Quantox\\API\\API\\API.csproj",
+      "projectUniqueName": "C:\\Users\\Stevan\\Desktop\\sad\\API\\API\\API.csproj",
       "projectName": "API",
-      "projectPath": "C:\\Users\\Stevan\\Desktop\\Quantox\\API\\API\\API.csproj",
+      "projectPath": "C:\\Users\\Stevan\\Desktop\\sad\\API\\API\\API.csproj",
       "packagesPath": "C:\\Users\\Stevan\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Stevan\\Desktop\\Quantox\\API\\API\\obj\\",
+      "outputPath": "C:\\Users\\Stevan\\Desktop\\sad\\API\\API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

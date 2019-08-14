@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Data;
+using API.DTO;
 using API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -72,7 +73,48 @@ namespace API.Controllers
 
             var posts = db.Posts.Where(q => q.userId == user).ToList();
 
-            return Ok(posts);
+            var postsWithComments = new List<PostDTO>();
+
+            foreach (var item in posts)
+            {
+                var p = new PostDTO();
+                p.post = item;
+
+                var comments = db.Comments.Where(q => q.post == item).ToList();
+
+                var commentsWithIsMy = new List<CommentDTO>();
+
+                foreach (var c in comments)
+                {
+                    var com = new CommentDTO();
+                    com.id = c.id;
+                    com.user = c.user;
+                    com.post = c.post;
+                    com.text = c.text;
+                    com.date = c.date;
+                    if(c.user == user )
+                    {
+                        com.isMy = true;
+                    }
+                    else
+                    {
+                        com.isMy = false;
+                    }
+                    commentsWithIsMy.Add(com);
+                }
+
+
+                p.comments = commentsWithIsMy;
+
+                var nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
+                p.numberOfLikes = nubmerOfLikes;
+
+                postsWithComments.Add(p);
+
+            }
+
+
+            return Ok(postsWithComments);
         }
     }
 }

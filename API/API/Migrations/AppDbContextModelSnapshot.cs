@@ -16,6 +16,46 @@ namespace API.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "2.2.3-servicing-35854");
 
+            modelBuilder.Entity("API.Models.Comment", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime>("date");
+
+                    b.Property<int?>("postid");
+
+                    b.Property<string>("text");
+
+                    b.Property<int?>("userid");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("postid");
+
+                    b.HasIndex("userid");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("API.Models.Like", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int?>("postid");
+
+                    b.Property<int?>("userid");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("postid");
+
+                    b.HasIndex("userid");
+
+                    b.ToTable("Likes");
+                });
+
             modelBuilder.Entity("API.Models.Post", b =>
                 {
                     b.Property<int>("id")
@@ -56,6 +96,28 @@ namespace API.Migrations
                     b.HasKey("id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("API.Models.Comment", b =>
+                {
+                    b.HasOne("API.Models.Post", "post")
+                        .WithMany()
+                        .HasForeignKey("postid");
+
+                    b.HasOne("API.Models.User", "user")
+                        .WithMany()
+                        .HasForeignKey("userid");
+                });
+
+            modelBuilder.Entity("API.Models.Like", b =>
+                {
+                    b.HasOne("API.Models.Post", "post")
+                        .WithMany()
+                        .HasForeignKey("postid");
+
+                    b.HasOne("API.Models.User", "user")
+                        .WithMany()
+                        .HasForeignKey("userid");
                 });
 
             modelBuilder.Entity("API.Models.Post", b =>

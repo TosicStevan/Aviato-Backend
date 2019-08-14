@@ -49,6 +49,14 @@ namespace API.Controllers
 
             var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
+            // username is unique
+            var usernameExist = db.Users.SingleOrDefault(q => q.username == userParam.username);
+            if(usernameExist != null)
+            {
+                return BadRequest(new { msg = "Username already exist" });
+            }
+
+
             try
             {
                 user.username = userParam.username;
@@ -106,6 +114,12 @@ namespace API.Controllers
 
             var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
+            var emailExist = db.Users.SingleOrDefault(q => q.email == userParam.email);
+            if(emailExist != null)
+            {
+                return BadRequest(new { msg = "Email already exist" });
+            }
+
             try
             {
                 user.email = userParam.email;
@@ -145,7 +159,7 @@ namespace API.Controllers
 
             if (validPassword)
             {
-                return BadRequest(new { poruka = "Same old and new password" });
+                return BadRequest(new { msg = "Same old and new password" });
             }
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userParam.password);

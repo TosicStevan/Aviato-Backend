@@ -273,3 +273,14 @@ C:\Users\Stevan\Desktop\Quantox\API\API\obj\Debug\netcoreapp2.0\API.AssemblyInfo
 C:\Users\Stevan\Desktop\Quantox\API\API\obj\Debug\netcoreapp2.0\API.AssemblyInfo.cs
 C:\Users\Stevan\Desktop\Quantox\API\API\obj\Debug\netcoreapp2.0\API.dll
 C:\Users\Stevan\Desktop\Quantox\API\API\obj\Debug\netcoreapp2.0\API.pdb
+C:\Users\Stevan\Desktop\sad\API\API\bin\Debug\netcoreapp2.0\API.deps.json
+C:\Users\Stevan\Desktop\sad\API\API\bin\Debug\netcoreapp2.0\API.runtimeconfig.json
+C:\Users\Stevan\Desktop\sad\API\API\bin\Debug\netcoreapp2.0\API.runtimeconfig.dev.json
+C:\Users\Stevan\Desktop\sad\API\API\bin\Debug\netcoreapp2.0\API.dll
+C:\Users\Stevan\Desktop\sad\API\API\bin\Debug\netcoreapp2.0\API.pdb
+C:\Users\Stevan\Desktop\sad\API\API\obj\Debug\netcoreapp2.0\API.csprojAssemblyReference.cache
+C:\Users\Stevan\Desktop\sad\API\API\obj\Debug\netcoreapp2.0\API.csproj.CoreCompileInputs.cache
+C:\Users\Stevan\Desktop\sad\API\API\obj\Debug\netcoreapp2.0\API.AssemblyInfoInputs.cache
+C:\Users\Stevan\Desktop\sad\API\API\obj\Debug\netcoreapp2.0\API.AssemblyInfo.cs
+C:\Users\Stevan\Desktop\sad\API\API\obj\Debug\netcoreapp2.0\API.dll
+C:\Users\Stevan\Desktop\sad\API\API\obj\Debug\netcoreapp2.0\API.pdb
