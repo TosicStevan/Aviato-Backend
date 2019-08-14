@@ -11,6 +11,7 @@ namespace API.DTO
         public virtual Post post { get; set; }
         public virtual List<CommentDTO> comments { get; set; }
         public int numberOfLikes { get; set; }
+        public bool isLiked { get; set; }
 
     }
 }

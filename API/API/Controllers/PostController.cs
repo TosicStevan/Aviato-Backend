@@ -109,6 +109,16 @@ namespace API.Controllers
                 var nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
                 p.numberOfLikes = nubmerOfLikes;
 
+                var isLiked = db.Likes.SingleOrDefault(q => q.post.id == item.id && item.userId.id == user.id);
+                if(isLiked == null)
+                {
+                    p.isLiked = false;
+                }
+                else
+                {
+                    p.isLiked = true;
+                }
+
                 postsWithComments.Add(p);
 
             }

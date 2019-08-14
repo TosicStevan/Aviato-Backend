@@ -38,6 +38,23 @@ namespace API.Controllers
 
             var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
+            var isLiked = db.Likes.SingleOrDefault(q => q.post.id == postParam.id && q.user.id == user.id);
+            if(isLiked != null)
+            {
+                try
+                {
+                    db.Likes.Remove(isLiked);
+                    db.SaveChanges();
+                    
+                    return Ok(new { like= false});
+                }
+                catch
+                {
+                    return BadRequest(new { msg = "Database eroor" });
+                }
+            }
+
+
             Like like = new Like();
             like.post = post;
             like.user = user;
@@ -46,7 +63,7 @@ namespace API.Controllers
             {
                 db.Likes.Add(like);
                 db.SaveChanges();
-                return Ok(like);
+                return Ok(new { like=true});
             }
             catch
             {
@@ -56,41 +73,41 @@ namespace API.Controllers
         }
 
 
-        [HttpPost("unlikePost")]
-        public IActionResult UnlikePost([FromBody] Post postParam )
-        {
+        //[HttpPost("unlikePost")]
+        //public IActionResult UnlikePost([FromBody] Post postParam )
+        //{
 
-            var post = db.Posts.SingleOrDefault(q => q.id == postParam.id);
+        //    var post = db.Posts.SingleOrDefault(q => q.id == postParam.id);
 
-            if (post == null)
-            {
-                return BadRequest(new { msg = "Invalid post" });
-            }
+        //    if (post == null)
+        //    {
+        //        return BadRequest(new { msg = "Invalid post" });
+        //    }
 
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+        //    // find user in token
+        //    var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
 
-            if (idClaim == null)
-            {
-                return BadRequest(new { msg = "Invalid user" });
-            }
+        //    if (idClaim == null)
+        //    {
+        //        return BadRequest(new { msg = "Invalid user" });
+        //    }
 
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+        //    var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
-            var like = db.Likes.SingleOrDefault(q => q.post.id == postParam.id && q.user.id == user.id);
+        //    var like = db.Likes.SingleOrDefault(q => q.post.id == postParam.id && q.user.id == user.id);
 
-            try
-            {
-                db.Likes.Remove(like);
-                db.SaveChanges();
-                return Ok(like);
-            }
-            catch
-            {
-                return BadRequest(new { msg = "Database eroor" });
-            }
+        //    try
+        //    {
+        //        db.Likes.Remove(like);
+        //        db.SaveChanges();
+        //        return Ok(like);
+        //    }
+        //    catch
+        //    {
+        //        return BadRequest(new { msg = "Database eroor" });
+        //    }
             
-        }
+        //}
         
     }
 }
