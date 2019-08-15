@@ -132,6 +132,17 @@ namespace API.Controllers
         public IActionResult GetPostByUsername([FromBody] User userParam)
         {
 
+            // find user in token
+            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+
+            if (idClaim == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            var userinToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+
             var user = db.Users.SingleOrDefault(q => q.username == userParam.username);
             if(user == null)
             {
@@ -159,7 +170,7 @@ namespace API.Controllers
                     com.post = c.post;
                     com.text = c.text;
                     com.date = c.date;
-                    if (c.user == user)
+                    if (c.user == userinToken)
                     {
                         com.isMy = true;
                     }
@@ -176,7 +187,7 @@ namespace API.Controllers
                 var nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
                 p.numberOfLikes = nubmerOfLikes;
 
-                var isLiked = db.Likes.SingleOrDefault(q => q.post.id == item.id && item.userId.id == user.id);
+                var isLiked = db.Likes.SingleOrDefault(q => q.post.id == item.id && item.userId.id == userinToken.id);
                 if (isLiked == null)
                 {
                     p.isLiked = false;
