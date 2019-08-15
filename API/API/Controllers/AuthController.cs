@@ -27,7 +27,7 @@ namespace API.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Registracija([FromBody]User user )
+        public IActionResult Register([FromBody]User user )
         {
 
             var emailExist = db.Users.Where(q => q.email == user.email);
@@ -48,6 +48,7 @@ namespace API.Controllers
             //hash sifre
             var hashedSifra = BCrypt.Net.BCrypt.HashPassword(user.password);
             user.password= hashedSifra;
+            user.isPublic = true;
 
             try
             {

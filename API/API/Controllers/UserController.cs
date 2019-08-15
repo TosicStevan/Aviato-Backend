@@ -32,8 +32,60 @@ namespace API.Controllers
             var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
             user.password = null;
 
+            var userDTO = new UserDTO();
+            userDTO.isMine = true;
+            userDTO.id = user.id;
+            userDTO.token = user.token;
+            userDTO.image = user.image;
+            userDTO.lastName = user.lastName;
+            userDTO.firstName = user.firstName;
+            userDTO.username = user.username;
+            userDTO.email = user.email;
+            
+            return Ok(userDTO);
+        }
 
-            return Ok(user);
+        [HttpGet("getUserByUsername")]
+        public IActionResult GetUserProfileByUsername([FromQuery(Name = "username")]string username)
+        {
+
+            // find user in token
+            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+
+            if (idClaim == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            var userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            var user = db.Users.SingleOrDefault(q => q.username == username);
+
+            if(user == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+
+
+            var userDTO = new UserDTO();
+            if(user.id == userInToken.id)
+            {
+                userDTO.isMine = true;
+            }
+            else
+            {
+                userDTO.isMine = false;
+            }
+            userDTO.id = user.id;
+            userDTO.token = user.token;
+            userDTO.image = user.image;
+            userDTO.lastName = user.lastName;
+            userDTO.firstName = user.firstName;
+            userDTO.username = user.username;
+            userDTO.email = user.email;
+
+            return Ok(userDTO);
         }
 
         [HttpPost("changeNames")]
@@ -48,13 +100,15 @@ namespace API.Controllers
             }
 
             var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
-
+            
             // username is unique
             var usernameExist = db.Users.SingleOrDefault(q => q.username == userParam.username);
-            if(usernameExist != null)
+
+            if (user.username != userParam.username &&  usernameExist != null)
             {
                 return BadRequest(new { msg = "Username already exist" });
             }
+            
 
 
             try

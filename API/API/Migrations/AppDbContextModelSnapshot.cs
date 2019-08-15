@@ -38,6 +38,26 @@ namespace API.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("API.Models.Following", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int?>("followedid");
+
+                    b.Property<int?>("followerid");
+
+                    b.Property<bool>("isAccept");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("followedid");
+
+                    b.HasIndex("followerid");
+
+                    b.ToTable("Followings");
+                });
+
             modelBuilder.Entity("API.Models.Like", b =>
                 {
                     b.Property<int>("id")
@@ -54,6 +74,22 @@ namespace API.Migrations
                     b.HasIndex("userid");
 
                     b.ToTable("Likes");
+                });
+
+            modelBuilder.Entity("API.Models.Notification", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("text");
+
+                    b.Property<int?>("userid");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("userid");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("API.Models.Post", b =>
@@ -85,6 +121,8 @@ namespace API.Migrations
 
                     b.Property<string>("image");
 
+                    b.Property<bool>("isPublic");
+
                     b.Property<string>("lastName");
 
                     b.Property<string>("password");
@@ -109,12 +147,30 @@ namespace API.Migrations
                         .HasForeignKey("userid");
                 });
 
+            modelBuilder.Entity("API.Models.Following", b =>
+                {
+                    b.HasOne("API.Models.User", "followed")
+                        .WithMany()
+                        .HasForeignKey("followedid");
+
+                    b.HasOne("API.Models.User", "follower")
+                        .WithMany()
+                        .HasForeignKey("followerid");
+                });
+
             modelBuilder.Entity("API.Models.Like", b =>
                 {
                     b.HasOne("API.Models.Post", "post")
                         .WithMany()
                         .HasForeignKey("postid");
 
+                    b.HasOne("API.Models.User", "user")
+                        .WithMany()
+                        .HasForeignKey("userid");
+                });
+
+            modelBuilder.Entity("API.Models.Notification", b =>
+                {
                     b.HasOne("API.Models.User", "user")
                         .WithMany()
                         .HasForeignKey("userid");
