@@ -15,5 +15,8 @@ namespace API.DTO
         public string token { get; set; }
         public string image { get; set; }
         public bool isMine { get; set; }
+        public bool isPublic { get; set; }
+        public bool isFollowing { get; set; }
+        public bool requestSend { get; set; }
     }
 }

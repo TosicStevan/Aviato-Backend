@@ -18,32 +18,35 @@ namespace API.Controllers
     {
         AppDbContext db = new AppDbContext();
 
-        [HttpGet("getUser")]
-        public IActionResult GetUserProfile([FromBody] User userParam)
-        {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+        //[HttpGet("getUser")]
+        //public IActionResult GetUserProfile([FromBody] User userParam)
+        //{
+        //    // find user in token
+        //    var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
 
-            if (idClaim == null)
-            {
-                return BadRequest(new { msg = "Invalid user" });
-            }
+        //    if (idClaim == null)
+        //    {
+        //        return BadRequest(new { msg = "Invalid user" });
+        //    }
 
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
-            user.password = null;
+        //    var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+        //    user.password = null;
 
-            var userDTO = new UserDTO();
-            userDTO.isMine = true;
-            userDTO.id = user.id;
-            userDTO.token = user.token;
-            userDTO.image = user.image;
-            userDTO.lastName = user.lastName;
-            userDTO.firstName = user.firstName;
-            userDTO.username = user.username;
-            userDTO.email = user.email;
+        //    var userDTO = new UserDTO();
+        //    userDTO.isMine = true;
+        //    userDTO.id = user.id;
+        //    userDTO.token = user.token;
+        //    userDTO.image = user.image;
+        //    userDTO.lastName = user.lastName;
+        //    userDTO.firstName = user.firstName;
+        //    userDTO.username = user.username;
+        //    userDTO.email = user.email;
+        //    userDTO.isPublic = user.isPublic;
             
-            return Ok(userDTO);
-        }
+
+            
+        //    return Ok(userDTO);
+        //}
 
         [HttpGet("getUserByUsername")]
         public IActionResult GetUserProfileByUsername([FromQuery(Name = "username")]string username)
@@ -84,6 +87,27 @@ namespace API.Controllers
             userDTO.firstName = user.firstName;
             userDTO.username = user.username;
             userDTO.email = user.email;
+            userDTO.isPublic = user.isPublic;
+
+            var isFollowing = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user && q.isAccept == true);
+            if(isFollowing == null)
+            {
+                userDTO.isFollowing = false;
+            }
+            else
+            {
+                userDTO.isFollowing = true;
+            }
+
+            var requestSend = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user && q.isAccept==false);
+            if(requestSend == null)
+            {
+                userDTO.requestSend = false;
+            }
+            else
+            {
+                userDTO.requestSend = true;
+            }
 
             return Ok(userDTO);
         }
@@ -231,6 +255,16 @@ namespace API.Controllers
                 return BadRequest(new { msg = "Database error" });
             }
 
+        }
+
+        [HttpPost("searchUsers")]
+        public IActionResult SearchUsers([FromBody] SearchDTO searchParam)
+        {
+
+            //search by username and full name
+            var users = db.Users.Select(q => new { name = q.firstName + " " + q.lastName, id=q.id, image=q.image, username = q.username, email= q.email})
+                .Where(q => q.name.ToLower().Contains(searchParam.search.ToLower()) || q.username.ToLower().Contains(searchParam.search.ToLower())).ToList().Take(5);
+            return Ok(users);
         }
 
     }

@@ -34,10 +34,21 @@ namespace API.Controllers
 
             Following follow = new Following();
             follow.follower = user;
-            follow.isAccept = false;
+
+            
+            
 
             var userFollowed = db.Users.SingleOrDefault(q => q.username == userParam.username);
-            if(userFollowed == null)
+
+            if (userFollowed.isPublic == true)
+            {
+                follow.isAccept = true;
+            }
+            else
+            {
+                follow.isAccept = false;
+            }
+            if (userFollowed == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
@@ -55,6 +66,59 @@ namespace API.Controllers
                 db.Followings.Add(follow);
                 db.SaveChanges();
                 return Ok(new { msg="Follow send"});
+            }
+            catch
+            {
+                return BadRequest(new { msg = "Database error" });
+            }
+            
+        }
+
+        [HttpPost("declineFollow")]
+        public IActionResult DeclineFoloow([FromBody] Following followParam)
+        {
+            var follow = db.Followings.SingleOrDefault(q => q.id == followParam.id);
+
+            if (follow == null)
+            {
+                return BadRequest(new { msg = "Invalid follow" });
+            }
+
+            try
+            {
+                db.Followings.Remove(follow);
+                db.SaveChanges();
+                return Ok(new { msg = "Declined" });
+            }
+            catch
+            {
+                return BadRequest(new { msg = "Database error" });
+            }
+        }
+
+        [HttpPost("unfollow")]
+        public IActionResult UnFollow([FromBody] User userParam)
+        {
+
+            // find user in token
+            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+
+            if (idClaim == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            var userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            var user = db.Users.SingleOrDefault(q => q.username == userParam.username);
+
+            var follow = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user);
+
+            try
+            {
+                db.Followings.Remove(follow);
+                db.SaveChanges();
+                return Ok(new { msg = "Unfollowed" });
             }
             catch
             {
@@ -111,17 +175,14 @@ namespace API.Controllers
         }
 
         [HttpGet("getNumberOfFollowers")]
-        public IActionResult GetNumberOfFollowers()
+        public IActionResult GetNumberOfFollowers([FromQuery(Name = "username")]string username)
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            var user = db.Users.SingleOrDefault(q => q.username == username);
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+            
 
             var numOfFollowers = db.Followings.Where(q => q.followed.id == user.id && q.isAccept == true).Count();
 
@@ -130,17 +191,13 @@ namespace API.Controllers
         }
 
         [HttpGet("getFollowers")]
-        public IActionResult GetFollowers()
+        public IActionResult GetFollowers([FromQuery(Name = "username")]string username)
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            var user = db.Users.SingleOrDefault(q => q.username == username);
+            if(user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             var followers = db.Followings.Include(q => q.follower).Where(q => q.followed.id == user.id && q.isAccept == true).ToList();
 
@@ -154,17 +211,13 @@ namespace API.Controllers
         }
 
         [HttpGet("getNumberOfFollowing")]
-        public IActionResult GetNumberOfFollowing()
+        public IActionResult GetNumberOfFollowing([FromQuery(Name = "username")]string username)
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            var user = db.Users.SingleOrDefault(q => q.username == username);
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             var numOfFollowing = db.Followings.Where(q => q.follower.id == user.id && q.isAccept == true).Count();
 
@@ -173,17 +226,13 @@ namespace API.Controllers
         }
 
         [HttpGet("getFollowing")]
-        public IActionResult GetFollowing()
+        public IActionResult GetFollowing([FromQuery(Name = "username")]string username)
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            var user = db.Users.SingleOrDefault(q => q.username == username);
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             var following = db.Followings.Include(q => q.followed).Where(q => q.follower.id == user.id && q.isAccept == true).ToList();
 
@@ -196,6 +245,7 @@ namespace API.Controllers
             return Ok(following);
         }
 
+        
 
 
 
