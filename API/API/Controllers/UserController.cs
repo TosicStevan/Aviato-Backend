@@ -18,51 +18,33 @@ namespace API.Controllers
     {
         AppDbContext db = new AppDbContext();
 
-        //[HttpGet("getUser")]
-        //public IActionResult GetUserProfile([FromBody] User userParam)
-        //{
-        //    // find user in token
-        //    var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
 
-        //    if (idClaim == null)
-        //    {
-        //        return BadRequest(new { msg = "Invalid user" });
-        //    }
-
-        //    var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
-        //    user.password = null;
-
-        //    var userDTO = new UserDTO();
-        //    userDTO.isMine = true;
-        //    userDTO.id = user.id;
-        //    userDTO.token = user.token;
-        //    userDTO.image = user.image;
-        //    userDTO.lastName = user.lastName;
-        //    userDTO.firstName = user.firstName;
-        //    userDTO.username = user.username;
-        //    userDTO.email = user.email;
-        //    userDTO.isPublic = user.isPublic;
-            
-
-            
-        //    return Ok(userDTO);
-        //}
-
-        [HttpGet("getUserByUsername")]
-        public IActionResult GetUserProfileByUsername([FromQuery(Name = "username")]string username)
+        private User GetUserInToken()
         {
-
             // find user in token
             var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
 
             if (idClaim == null)
             {
+                return null;
+            }
+
+            User userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            return userInToken;
+        }
+
+        [HttpGet("getUserByUsername")]
+        public IActionResult GetUserProfileByUsername([FromQuery(Name = "username")]string username)
+        {
+            User userInToken = GetUserInToken();
+
+            if(userInToken == null)
+            {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
-
-            var user = db.Users.SingleOrDefault(q => q.username == username);
+            User user = db.Users.SingleOrDefault(q => q.username == username);
 
             if(user == null)
             {
@@ -71,7 +53,7 @@ namespace API.Controllers
 
 
 
-            var userDTO = new UserDTO();
+            UserDTO userDTO = new UserDTO();
             if(user.id == userInToken.id)
             {
                 userDTO.isMine = true;
@@ -81,13 +63,15 @@ namespace API.Controllers
                 userDTO.isMine = false;
             }
             userDTO.id = user.id;
-            userDTO.token = user.token;
             userDTO.image = user.image;
             userDTO.lastName = user.lastName;
             userDTO.firstName = user.firstName;
             userDTO.username = user.username;
             userDTO.email = user.email;
             userDTO.isPublic = user.isPublic;
+
+            int numberOfPosts = db.Posts.Where(q => q.userId == user).Count();
+            
 
             var isFollowing = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user && q.isAccept == true);
             if(isFollowing == null)
@@ -99,7 +83,7 @@ namespace API.Controllers
                 userDTO.isFollowing = true;
             }
 
-            var requestSend = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user && q.isAccept==false);
+            Following requestSend = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user && q.isAccept==false);
             if(requestSend == null)
             {
                 userDTO.requestSend = false;
@@ -115,18 +99,15 @@ namespace API.Controllers
         [HttpPost("changeNames")]
         public IActionResult ChangeNames([FromBody] User userParam)
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+            User user = GetUserInToken();
 
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
-            
             // username is unique
-            var usernameExist = db.Users.SingleOrDefault(q => q.username == userParam.username);
+            User usernameExist = db.Users.SingleOrDefault(q => q.username == userParam.username);
 
             if (user.username != userParam.username &&  usernameExist != null)
             {
@@ -154,15 +135,12 @@ namespace API.Controllers
         [HttpPost("changeImage")]
         public IActionResult ChangeImage([FromBody] User userParam)
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+            User user = GetUserInToken();
 
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             try
             {
@@ -181,18 +159,14 @@ namespace API.Controllers
         [HttpPost("changeEmail")]
         public IActionResult ChangeEmail([FromBody] User userParam)
         {
+            User user = GetUserInToken();
 
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
-
-            var emailExist = db.Users.SingleOrDefault(q => q.email == userParam.email);
+            User emailExist = db.Users.SingleOrDefault(q => q.email == userParam.email);
             if(emailExist != null)
             {
                 return BadRequest(new { msg = "Email already exist" });
@@ -215,15 +189,12 @@ namespace API.Controllers
         [HttpPost("changePassword")]
         public IActionResult ChangePassword([FromBody] UserPasswordDTO userParam)
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+            User user = GetUserInToken();
 
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             bool validOldPassword = BCrypt.Net.BCrypt.Verify(userParam.oldPassword, user.password);
 
@@ -260,11 +231,33 @@ namespace API.Controllers
         [HttpPost("searchUsers")]
         public IActionResult SearchUsers([FromBody] SearchDTO searchParam)
         {
-
             //search by username and full name
             var users = db.Users.Select(q => new { name = q.firstName + " " + q.lastName, id=q.id, image=q.image, username = q.username, email= q.email})
                 .Where(q => q.name.ToLower().Contains(searchParam.search.ToLower()) || q.username.ToLower().Contains(searchParam.search.ToLower())).ToList().Take(5);
             return Ok(users);
+        }
+
+        [HttpPost("changePrivacy")]
+        public IActionResult ChangePrivacy()
+        {
+            User user = GetUserInToken();
+
+            if (user == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            try
+            {
+                user.isPublic = !user.isPublic;
+                db.SaveChanges();
+                user.password = null;
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(new { msg = "Database error" });
+            }
         }
 
     }

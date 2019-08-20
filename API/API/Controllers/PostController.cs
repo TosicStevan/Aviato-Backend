@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using API.Data;
 using API.DTO;
+using API.Hubs;
 using API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
@@ -19,30 +21,53 @@ namespace API.Controllers
     {
 
         AppDbContext db = new AppDbContext();
+        private readonly IHubContext<PostHub> _hubContext;
 
-        [HttpPost("add")]
-        public IActionResult AddPost([FromBody] Post postParam )
+        public PostController(IHubContext<PostHub> hubContext)
         {
+            _hubContext = hubContext;
+        }
 
-            Post post = new Post();
-
+        private User GetUserInToken()
+        {
             // find user in token
             var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
+            
             if (idClaim == null)
+            {
+                return null;
+            }
+
+            User userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            return userInToken;
+        }
+
+        [HttpPost("add")]
+        public async Task<IActionResult> AddPostAsync([FromBody] Post postParam )
+        {
+
+            User user = GetUserInToken();
+
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+            Post post = new Post();
 
-            if(user != null)
-            {
-                post.userId = user;
-            }
+            post.userId = user;
 
             post.post = postParam.post;
             post.date = DateTime.Now;
+
+            PostDTO postDTO = new PostDTO();
+            postDTO.post = post;
+            postDTO.numberOfLikes = 0;
+            postDTO.isLiked = false;
+            postDTO.comments = new List<CommentDTO>();
+            
+            await _hubContext.Clients.Group(user.id.ToString()).SendAsync("ReceiveMessage", postDTO);
 
             try
             {
@@ -61,16 +86,12 @@ namespace API.Controllers
         [HttpGet("getMyPosts")]
         public IActionResult GetMyPost()
         {
+            User user = GetUserInToken();
 
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             var posts = db.Posts.Where(q => q.userId == user).ToList().OrderByDescending(q => q.date);
 
@@ -87,7 +108,7 @@ namespace API.Controllers
 
                 foreach (var c in comments)
                 {
-                    var com = new CommentDTO();
+                    CommentDTO com = new CommentDTO();
                     com.id = c.id;
                     com.user = c.user;
                     com.post = c.post;
@@ -107,7 +128,7 @@ namespace API.Controllers
 
                 p.comments = commentsWithIsMy;
 
-                var nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
+                int nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
                 p.numberOfLikes = nubmerOfLikes;
 
                 var isLiked = db.Likes.SingleOrDefault(q => q.post.id == item.id && item.userId.id == user.id);
@@ -131,19 +152,15 @@ namespace API.Controllers
         [HttpPost("getPosts")]
         public IActionResult GetPostByUsername([FromBody] User userParam)
         {
+            User userInToken = GetUserInToken();
 
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            if (userInToken == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var userinToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
-
-            var user = db.Users.SingleOrDefault(q => q.username == userParam.username);
+            User user = db.Users.SingleOrDefault(q => q.username == userParam.username);
             if(user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
@@ -158,19 +175,19 @@ namespace API.Controllers
                 var p = new PostDTO();
                 p.post = item;
 
-                var comments = db.Comments.Include(q => q.user).Where(q => q.post == item).ToList().OrderByDescending(q => q.date);
+                var comments = db.Comments.Include(q => q.user).Where(q => q.post == item).ToList();
 
                 var commentsWithIsMy = new List<CommentDTO>();
 
                 foreach (var c in comments)
                 {
-                    var com = new CommentDTO();
+                    CommentDTO com = new CommentDTO();
                     com.id = c.id;
                     com.user = c.user;
                     com.post = c.post;
                     com.text = c.text;
                     com.date = c.date;
-                    if (c.user == userinToken)
+                    if (c.user == userInToken)
                     {
                         com.isMy = true;
                     }
@@ -184,10 +201,10 @@ namespace API.Controllers
 
                 p.comments = commentsWithIsMy;
 
-                var nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
+                int nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
                 p.numberOfLikes = nubmerOfLikes;
 
-                var isLiked = db.Likes.SingleOrDefault(q => q.post.id == item.id && q.user == userinToken);
+                var isLiked = db.Likes.SingleOrDefault(q => q.post.id == item.id && q.user == userInToken);
                 if (isLiked == null)
                 {
                     p.isLiked = false;
@@ -208,16 +225,12 @@ namespace API.Controllers
         [HttpGet("getAllPosts")]
         public IActionResult GetAllPosts()
         {
+            User user = GetUserInToken();
 
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             var followers = db.Followings.Include(q => q.followed).Where(q => q.follower == user && q.isAccept == true).ToList();
 
@@ -230,16 +243,16 @@ namespace API.Controllers
 
             foreach (var item in posts)
             {
-                var p = new PostDTO();
+                PostDTO p = new PostDTO();
                 p.post = item;
                 item.userId.password = null;
-                var comments = db.Comments.Include(q => q.user).Where(q => q.post == item).ToList().OrderByDescending(q => q.date);
+                var comments = db.Comments.Include(q => q.user).Where(q => q.post == item).ToList();
 
                 var commentsWithIsMy = new List<CommentDTO>();
 
                 foreach (var c in comments)
                 {
-                    var com = new CommentDTO();
+                    CommentDTO com = new CommentDTO();
                     com.id = c.id;
                     com.user = c.user;
                     com.post = c.post;
@@ -259,7 +272,7 @@ namespace API.Controllers
 
                 p.comments = commentsWithIsMy;
 
-                var nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
+                int nubmerOfLikes = db.Likes.Where(q => q.post.id == item.id).Count();
                 p.numberOfLikes = nubmerOfLikes;
 
                 var isLiked = db.Likes.SingleOrDefault(q => q.post.id == item.id && q.user == user);

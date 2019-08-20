@@ -18,5 +18,6 @@ namespace API.Models
         public string token { get; set; }
         public string image { get; set; }
         public bool isPublic { get; set; }
+        public bool isOnline { get; set; }
     }
 }

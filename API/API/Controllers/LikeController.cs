@@ -17,26 +17,38 @@ namespace API.Controllers
     {
         AppDbContext db = new AppDbContext();
 
+        private User GetUserInToken()
+        {
+            // find user in token
+            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+
+            if (idClaim == null)
+            {
+                return null;
+            }
+
+            User userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            return userInToken;
+        }
+
         [HttpPost("likePost")]
         public IActionResult LikePost([FromBody] Post postParam)
         {
 
-            var post = db.Posts.SingleOrDefault(q => q.id == postParam.id);
+            Post post = db.Posts.SingleOrDefault(q => q.id == postParam.id);
 
             if(post == null)
             {
                 return BadRequest(new { msg = "Invalid post" });
             }
 
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+            User user = GetUserInToken();
 
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             var isLiked = db.Likes.SingleOrDefault(q => q.post.id == postParam.id && q.user.id == user.id);
             if(isLiked != null)

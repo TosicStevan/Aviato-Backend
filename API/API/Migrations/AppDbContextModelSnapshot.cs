@@ -121,6 +121,8 @@ namespace API.Migrations
 
                     b.Property<string>("image");
 
+                    b.Property<bool>("isOnline");
+
                     b.Property<bool>("isPublic");
 
                     b.Property<string>("lastName");

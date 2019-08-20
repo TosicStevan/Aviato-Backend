@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 using API.Data;
 using API.Helpers;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace API.Controllers
 {
-
+    [Authorize]
     [Route("api/[controller]")]
     public class AuthController : Controller
     {
@@ -26,6 +27,7 @@ namespace API.Controllers
             _appSettings = appSettings.Value;
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
         public IActionResult Register([FromBody]User user )
         {
@@ -55,7 +57,7 @@ namespace API.Controllers
                 db.Users.Add(user);
                 db.SaveChanges();
 
-                return Ok(new { msg = "Successfula register" });
+                return Ok(new { msg = "Successful register" });
             }
             catch
             {
@@ -64,6 +66,7 @@ namespace API.Controllers
             
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public IActionResult Login([FromBody] User userParam)
         {
@@ -99,18 +102,47 @@ namespace API.Controllers
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
+            user.isOnline = true;
+            db.SaveChanges();
 
             user.token = tokenHandler.WriteToken(token);
+            
             user.password = null;
+            
 
             return Ok(user);
         }
 
-        [HttpPost("changePassword")]
-        public IActionResult ChangePassword()
+        [HttpPost("logout")]
+        public IActionResult LogOut()
         {
-            return Ok();
+            // find user in token
+            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+
+            if (idClaim == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            User user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+            if(user == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            try
+            {
+                user.isOnline = false;
+                db.SaveChanges();
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(new { msg = "Database error" });
+            }
+            
         }
+
 
     }
 }

@@ -17,21 +17,33 @@ namespace API.Controllers
     {
         AppDbContext db = new AppDbContext();
 
-        [HttpPost("addComment")]
-        public IActionResult AddComment([FromBody] Comment commentParam )
+        private User GetUserInToken()
         {
             // find user in token
             var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
 
             if (idClaim == null)
             {
+                return null;
+            }
+
+            User userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            return userInToken;
+        }
+
+
+        [HttpPost("addComment")]
+        public IActionResult AddComment([FromBody] Comment commentParam )
+        {
+            User user = GetUserInToken();
+
+            if (user == null)
+            {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
-
-
-            var post = db.Posts.SingleOrDefault(q => q.id == commentParam.post.id);
+            Post post = db.Posts.SingleOrDefault(q => q.id == commentParam.post.id);
 
             Comment comment = new Comment();
 
@@ -56,7 +68,7 @@ namespace API.Controllers
         [HttpPost("deleteComment")]
         public IActionResult DeleteComment([FromBody] Comment commentParam)
         {
-            var deleteComment = db.Comments.SingleOrDefault(q => q.id == commentParam.id);
+            Comment deleteComment = db.Comments.SingleOrDefault(q => q.id == commentParam.id);
 
             try
             {

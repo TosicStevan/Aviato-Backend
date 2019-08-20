@@ -17,20 +17,32 @@ namespace API.Controllers
     public class FollowingController : Controller
     {
         AppDbContext db = new AppDbContext();
-        
-        [HttpPost("follow")]
-        public IActionResult Follow([FromBody] User userParam)
-        {
 
+        private User GetUserInToken()
+        {
             // find user in token
             var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
 
             if (idClaim == null)
             {
-                return BadRequest(new { msg = "Invalid user" });
+                return null;
             }
 
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+            User userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+
+            return userInToken;
+        }
+
+
+        [HttpPost("follow")]
+        public IActionResult Follow([FromBody] User userParam)
+        {
+            User user = GetUserInToken();
+
+            if (user == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
 
             Following follow = new Following();
             follow.follower = user;
@@ -38,7 +50,7 @@ namespace API.Controllers
             
             
 
-            var userFollowed = db.Users.SingleOrDefault(q => q.username == userParam.username);
+            User userFollowed = db.Users.SingleOrDefault(q => q.username == userParam.username);
 
             if (userFollowed.isPublic == true)
             {
@@ -55,7 +67,7 @@ namespace API.Controllers
 
             follow.followed = userFollowed;
 
-            var validFollow = db.Followings.SingleOrDefault(q => q.followed == userFollowed && q.follower == user);
+            Following validFollow = db.Followings.SingleOrDefault(q => q.followed == userFollowed && q.follower == user);
             if(validFollow != null)
             {
                 return BadRequest(new { msg = "Follow already exist" });
@@ -77,7 +89,7 @@ namespace API.Controllers
         [HttpPost("declineFollow")]
         public IActionResult DeclineFoloow([FromBody] Following followParam)
         {
-            var follow = db.Followings.SingleOrDefault(q => q.id == followParam.id);
+            Following follow = db.Followings.SingleOrDefault(q => q.id == followParam.id);
 
             if (follow == null)
             {
@@ -99,20 +111,16 @@ namespace API.Controllers
         [HttpPost("unfollow")]
         public IActionResult UnFollow([FromBody] User userParam)
         {
+            User userInToken = GetUserInToken();
 
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
-
-            if (idClaim == null)
+            if (userInToken == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var userInToken = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
+            User user = db.Users.SingleOrDefault(q => q.username == userParam.username);
 
-            var user = db.Users.SingleOrDefault(q => q.username == userParam.username);
-
-            var follow = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user);
+            Following follow = db.Followings.SingleOrDefault(q => q.follower == userInToken && q.followed == user);
 
             try
             {
@@ -130,15 +138,12 @@ namespace API.Controllers
         [HttpGet("getFollowRequest")]
         public IActionResult GetFollowRequest()
         {
-            // find user in token
-            var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
+            User user = GetUserInToken();
 
-            if (idClaim == null)
+            if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
-
-            var user = db.Users.SingleOrDefault(q => q.id.ToString() == idClaim.Value);
 
             var followRequest = db.Followings.Include(q => q.follower).Where(q => q.followed.id == user.id && q.isAccept == false).ToList();
 
@@ -154,7 +159,7 @@ namespace API.Controllers
         [HttpPost("acceptFollow")]
         public IActionResult AcceptFollow([FromBody] Following followParam)
         {
-            var follow = db.Followings.SingleOrDefault(q => q.id == followParam.id);
+            Following follow = db.Followings.SingleOrDefault(q => q.id == followParam.id);
 
             if(follow == null)
             {
@@ -177,14 +182,14 @@ namespace API.Controllers
         [HttpGet("getNumberOfFollowers")]
         public IActionResult GetNumberOfFollowers([FromQuery(Name = "username")]string username)
         {
-            var user = db.Users.SingleOrDefault(q => q.username == username);
+            User user = db.Users.SingleOrDefault(q => q.username == username);
             if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
             
 
-            var numOfFollowers = db.Followings.Where(q => q.followed.id == user.id && q.isAccept == true).Count();
+            int numOfFollowers = db.Followings.Where(q => q.followed.id == user.id && q.isAccept == true).Count();
 
 
             return Ok(numOfFollowers);
@@ -193,7 +198,7 @@ namespace API.Controllers
         [HttpGet("getFollowers")]
         public IActionResult GetFollowers([FromQuery(Name = "username")]string username)
         {
-            var user = db.Users.SingleOrDefault(q => q.username == username);
+            User user = db.Users.SingleOrDefault(q => q.username == username);
             if(user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
@@ -213,13 +218,13 @@ namespace API.Controllers
         [HttpGet("getNumberOfFollowing")]
         public IActionResult GetNumberOfFollowing([FromQuery(Name = "username")]string username)
         {
-            var user = db.Users.SingleOrDefault(q => q.username == username);
+            User user = db.Users.SingleOrDefault(q => q.username == username);
             if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var numOfFollowing = db.Followings.Where(q => q.follower.id == user.id && q.isAccept == true).Count();
+            int numOfFollowing = db.Followings.Where(q => q.follower.id == user.id && q.isAccept == true).Count();
 
 
             return Ok(numOfFollowing);
@@ -228,7 +233,7 @@ namespace API.Controllers
         [HttpGet("getFollowing")]
         public IActionResult GetFollowing([FromQuery(Name = "username")]string username)
         {
-            var user = db.Users.SingleOrDefault(q => q.username == username);
+            User user = db.Users.SingleOrDefault(q => q.username == username);
             if (user == null)
             {
                 return BadRequest(new { msg = "Invalid user" });
@@ -245,7 +250,31 @@ namespace API.Controllers
             return Ok(following);
         }
 
-        
+        [HttpGet("getOnlineFollowing")]
+        public IActionResult GetOnlineFollowing([FromQuery(Name = "username")]string username)
+        {
+            User user = db.Users.SingleOrDefault(q => q.username == username);
+            if (user == null)
+            {
+                return BadRequest(new { msg = "Invalid user" });
+            }
+
+            var following = db.Followings.Include(q => q.followed).Where(q => q.followed.isOnline == true && q.follower.id == user.id && q.isAccept == true).ToList();
+
+            var onlineFollowing = new List<User>();
+
+            foreach (var item in following)
+            {
+                item.followed.password = null;
+                item.follower = null;
+                onlineFollowing.Add(item.followed);
+                
+            }
+
+            return Ok(onlineFollowing);
+        }
+
+
 
 
 

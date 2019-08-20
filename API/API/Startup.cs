@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-
+using API.Hubs;
 
 namespace API
 {
@@ -39,12 +39,10 @@ namespace API
 
 
             services.AddDistributedMemoryCache();
+            
 
-            services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromDays(15);
-            });
-
+            //services.AddSingleton<IConnectionMapping, ConnectionMapping>();
+            services.AddSignalR();
 
 
             services.AddHttpContextAccessor();
@@ -106,8 +104,12 @@ namespace API
             app.UseCors("CorsPolicy");
             app.UseAuthentication();
             app.UseStaticFiles();
-            app.UseSession();
-            
+            //app.UseSession();
+            app.UseSignalR(route =>
+            {
+                route.MapHub<PostHub>("/posthub");
+            });
+
             app.UseMvc();
         }
     }
