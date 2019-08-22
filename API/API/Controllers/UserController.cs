@@ -16,8 +16,7 @@ namespace API.Controllers
     [Route("api/User")]
     public class UserController : Controller
     {
-        AppDbContext db = new AppDbContext();
-
+        private readonly AppDbContext db = new AppDbContext();
 
         private User GetUserInToken()
         {
@@ -37,6 +36,12 @@ namespace API.Controllers
         [HttpGet("getUserByUsername")]
         public IActionResult GetUserProfileByUsername([FromQuery(Name = "username")]string username)
         {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User userInToken = GetUserInToken();
 
             if(userInToken == null)
@@ -99,6 +104,11 @@ namespace API.Controllers
         [HttpPost("changeNames")]
         public IActionResult ChangeNames([FromBody] User userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -135,6 +145,11 @@ namespace API.Controllers
         [HttpPost("changeImage")]
         public IActionResult ChangeImage([FromBody] User userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -159,6 +174,11 @@ namespace API.Controllers
         [HttpPost("changeEmail")]
         public IActionResult ChangeEmail([FromBody] User userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -189,6 +209,11 @@ namespace API.Controllers
         [HttpPost("changePassword")]
         public IActionResult ChangePassword([FromBody] UserPasswordDTO userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -231,6 +256,11 @@ namespace API.Controllers
         [HttpPost("searchUsers")]
         public IActionResult SearchUsers([FromBody] SearchDTO searchParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             //search by username and full name
             var users = db.Users.Select(q => new { name = q.firstName + " " + q.lastName, id=q.id, image=q.image, username = q.username, email= q.email})
                 .Where(q => q.name.ToLower().Contains(searchParam.search.ToLower()) || q.username.ToLower().Contains(searchParam.search.ToLower())).ToList().Take(5);
@@ -240,6 +270,11 @@ namespace API.Controllers
         [HttpPost("changePrivacy")]
         public IActionResult ChangePrivacy()
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)

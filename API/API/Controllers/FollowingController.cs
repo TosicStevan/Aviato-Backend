@@ -16,7 +16,7 @@ namespace API.Controllers
     [Authorize]
     public class FollowingController : Controller
     {
-        AppDbContext db = new AppDbContext();
+        private readonly AppDbContext db = new AppDbContext();
 
         private User GetUserInToken()
         {
@@ -37,6 +37,11 @@ namespace API.Controllers
         [HttpPost("follow")]
         public IActionResult Follow([FromBody] User userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -89,6 +94,11 @@ namespace API.Controllers
         [HttpPost("declineFollow")]
         public IActionResult DeclineFoloow([FromBody] Following followParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             Following follow = db.Followings.SingleOrDefault(q => q.id == followParam.id);
 
             if (follow == null)
@@ -111,6 +121,11 @@ namespace API.Controllers
         [HttpPost("unfollow")]
         public IActionResult UnFollow([FromBody] User userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User userInToken = GetUserInToken();
 
             if (userInToken == null)
@@ -138,6 +153,11 @@ namespace API.Controllers
         [HttpGet("getFollowRequest")]
         public IActionResult GetFollowRequest()
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -159,6 +179,11 @@ namespace API.Controllers
         [HttpPost("acceptFollow")]
         public IActionResult AcceptFollow([FromBody] Following followParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             Following follow = db.Followings.SingleOrDefault(q => q.id == followParam.id);
 
             if(follow == null)
@@ -182,6 +207,11 @@ namespace API.Controllers
         [HttpGet("getNumberOfFollowers")]
         public IActionResult GetNumberOfFollowers([FromQuery(Name = "username")]string username)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = db.Users.SingleOrDefault(q => q.username == username);
             if (user == null)
             {
@@ -198,6 +228,11 @@ namespace API.Controllers
         [HttpGet("getFollowers")]
         public IActionResult GetFollowers([FromQuery(Name = "username")]string username)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = db.Users.SingleOrDefault(q => q.username == username);
             if(user == null)
             {
@@ -218,6 +253,11 @@ namespace API.Controllers
         [HttpGet("getNumberOfFollowing")]
         public IActionResult GetNumberOfFollowing([FromQuery(Name = "username")]string username)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = db.Users.SingleOrDefault(q => q.username == username);
             if (user == null)
             {
@@ -233,6 +273,11 @@ namespace API.Controllers
         [HttpGet("getFollowing")]
         public IActionResult GetFollowing([FromQuery(Name = "username")]string username)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = db.Users.SingleOrDefault(q => q.username == username);
             if (user == null)
             {
@@ -253,6 +298,11 @@ namespace API.Controllers
         [HttpGet("getOnlineFollowing")]
         public IActionResult GetOnlineFollowing([FromQuery(Name = "username")]string username)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = db.Users.SingleOrDefault(q => q.username == username);
             if (user == null)
             {

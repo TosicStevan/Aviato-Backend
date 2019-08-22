@@ -20,7 +20,7 @@ namespace API.Controllers
     public class PostController : Controller
     {
 
-        AppDbContext db = new AppDbContext();
+        private readonly AppDbContext db = new AppDbContext();
         private readonly IHubContext<PostHub> _hubContext;
 
         public PostController(IHubContext<PostHub> hubContext)
@@ -46,6 +46,10 @@ namespace API.Controllers
         [HttpPost("add")]
         public async Task<IActionResult> AddPostAsync([FromBody] Post postParam )
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
 
             User user = GetUserInToken();
 
@@ -86,6 +90,11 @@ namespace API.Controllers
         [HttpGet("getMyPosts")]
         public IActionResult GetMyPost()
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -152,6 +161,11 @@ namespace API.Controllers
         [HttpPost("getPosts")]
         public IActionResult GetPostByUsername([FromBody] User userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User userInToken = GetUserInToken();
 
             if (userInToken == null)
@@ -225,6 +239,11 @@ namespace API.Controllers
         [HttpGet("getAllPosts")]
         public IActionResult GetAllPosts()
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             User user = GetUserInToken();
 
             if (user == null)

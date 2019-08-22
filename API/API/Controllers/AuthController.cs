@@ -19,7 +19,7 @@ namespace API.Controllers
     [Route("api/[controller]")]
     public class AuthController : Controller
     {
-        AppDbContext db = new AppDbContext();
+        private readonly AppDbContext db = new AppDbContext();
         private readonly AppSettings _appSettings;
 
         public AuthController(IOptions<AppSettings> appSettings)
@@ -31,11 +31,15 @@ namespace API.Controllers
         [HttpPost("register")]
         public IActionResult Register([FromBody]User user )
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
 
             var emailExist = db.Users.Where(q => q.email == user.email);
             var usernameExist = db.Users.Where(q => q.username == user.username);
             
-            //provera emaila i usernamea u bazi
+            //check email and username
             if (emailExist.Any())
             {
                 return BadRequest(new { msg = "Email already exist" });
@@ -47,7 +51,7 @@ namespace API.Controllers
             }
 
 
-            //hash sifre
+            //hash password
             var hashedSifra = BCrypt.Net.BCrypt.HashPassword(user.password);
             user.password= hashedSifra;
             user.isPublic = true;
@@ -70,8 +74,12 @@ namespace API.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] User userParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
 
-            var user = db.Users.SingleOrDefault(q => q.username == userParam.username);
+            User user = db.Users.SingleOrDefault(q => q.username == userParam.username);
             if (user == null)
             {
                 return BadRequest(new { msg = "Invalid username" });
@@ -88,6 +96,7 @@ namespace API.Controllers
                 return BadRequest(new { msg = "Invalid password" });
             }
 
+            // create token
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -116,6 +125,11 @@ namespace API.Controllers
         [HttpPost("logout")]
         public IActionResult LogOut()
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             // find user in token
             var idClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("id", StringComparison.InvariantCultureIgnoreCase));
 

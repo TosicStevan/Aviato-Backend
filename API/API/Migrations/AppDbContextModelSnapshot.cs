@@ -81,11 +81,15 @@ namespace API.Migrations
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<int?>("postid");
+
                     b.Property<string>("text");
 
                     b.Property<int?>("userid");
 
                     b.HasKey("id");
+
+                    b.HasIndex("postid");
 
                     b.HasIndex("userid");
 
@@ -173,6 +177,10 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Models.Notification", b =>
                 {
+                    b.HasOne("API.Models.Post", "post")
+                        .WithMany()
+                        .HasForeignKey("postid");
+
                     b.HasOne("API.Models.User", "user")
                         .WithMany()
                         .HasForeignKey("userid");

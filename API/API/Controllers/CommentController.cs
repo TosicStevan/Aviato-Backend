@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Data;
+using API.Hubs;
 using API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
@@ -15,7 +18,13 @@ namespace API.Controllers
     [Authorize]
     public class CommentController : Controller
     {
-        AppDbContext db = new AppDbContext();
+        private readonly AppDbContext db = new AppDbContext();
+        private readonly IHubContext<PostHub> _hubContext;
+
+        public CommentController(IHubContext<PostHub> hubContext)
+        {
+            _hubContext = hubContext;
+        }
 
         private User GetUserInToken()
         {
@@ -32,10 +41,21 @@ namespace API.Controllers
             return userInToken;
         }
 
+        private void SendNotification(Notification notification, string groupName)
+        {
+            _hubContext.Clients.Group(groupName).SendAsync("ReceiveNotification", notification);
+        }
+
 
         [HttpPost("addComment")]
         public IActionResult AddComment([FromBody] Comment commentParam )
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+            
+
             User user = GetUserInToken();
 
             if (user == null)
@@ -43,7 +63,7 @@ namespace API.Controllers
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            Post post = db.Posts.SingleOrDefault(q => q.id == commentParam.post.id);
+            Post post = db.Posts.Include(q => q.userId).SingleOrDefault(q => q.id == commentParam.post.id);
 
             Comment comment = new Comment();
 
@@ -51,11 +71,21 @@ namespace API.Controllers
             comment.post = post;
             comment.text = commentParam.text;
             comment.date = DateTime.Now;
-
+            Notification notification = new Notification();
+            notification.post = post;
+            notification.text = " comment your post ";
+            notification.user = user;
             try
             {
                 db.Comments.Add(comment);
+                db.Notifications.Add(notification);
                 db.SaveChanges();
+
+                notification.user.password = null;
+                notification.post.userId.password = null;
+
+                SendNotification(notification, post.userId.username + "Notification");
+
                 return Ok(comment);
             }
             catch
@@ -68,6 +98,11 @@ namespace API.Controllers
         [HttpPost("deleteComment")]
         public IActionResult DeleteComment([FromBody] Comment commentParam)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Invalid Request");
+            }
+
             Comment deleteComment = db.Comments.SingleOrDefault(q => q.id == commentParam.id);
 
             try

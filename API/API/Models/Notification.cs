@@ -11,6 +11,7 @@ namespace API.Models
         [Key]
         public int id { get; set; }
         public virtual User user { get; set; }
+        public virtual Post post { get; set; }
         public string  text { get; set; }
     }
 }
