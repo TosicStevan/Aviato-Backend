@@ -47,7 +47,7 @@ namespace API.Controllers
                 return BadRequest(new { msg = "Invalid user" });
             }
 
-            var notifications = db.Notifications.Include(q => q.user).Include(q => q.post).Where(q => q.post.userId == user).OrderByDescending(q => q.id).Take(5);
+            var notifications = db.Notifications.Include(q => q.user).Include(q => q.post).Where(q => q.post.userId == user).OrderByDescending(q => q.id).Take(10).ToList();
 
             foreach (var item in notifications)
             {

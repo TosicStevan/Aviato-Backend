@@ -256,7 +256,7 @@ namespace API.Controllers
             followers.Add(new Following { followed = user, follower = user });
             var followersIds = followers.Select(q => q.followed.id);
             
-            var posts = db.Posts.Include(u => u.userId).Where(q => followersIds.Contains(q.userId.id)).ToList().OrderByDescending(q => q.date).Take(10);
+            var posts = db.Posts.Include(u => u.userId).Where(q => followersIds.Contains(q.userId.id)).ToList().OrderByDescending(q => q.date);
 
             var postsWithComments = new List<PostDTO>();
 
